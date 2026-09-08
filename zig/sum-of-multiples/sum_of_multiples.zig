@@ -3,27 +3,18 @@ const mem = std.mem;
 
 pub fn sum(allocator: mem.Allocator, factors: []const u32, limit: u32) !u64 {
     _ = allocator;
-
     var total: i128 = 0;
     var subset: u64 = 1;
     const end = @as(u64, 1) << @intCast(factors.len);
-    while (subset < end) : (subset += 1) {
-        var l: u128 = 1; // lcm of this subset
-        var dead = false;
+    next_subset: while (subset < end) : (subset += 1) {
+        var divisor: u128 = 1;
         for (factors, 0..) |f, i| {
             if (subset & (@as(u64, 1) << @intCast(i)) == 0) continue;
-            if (f == 0) {
-                dead = true;
-                break;
-            }
-            l = std.math.lcm(l, @as(u128, f));
-            if (l >= limit) {
-                dead = true;
-                break;
-            }
+            if (f == 0) continue :next_subset;
+            divisor = std.math.lcm(divisor, @as(u128, f));
+            if (divisor >= limit) continue :next_subset;
         }
-        if (dead) continue;
-        const term: i128 = @intCast(sumMultiples(@intCast(l), limit));
+        const term: i128 = @intCast(sumMultiples(@intCast(divisor), limit));
 
         // A ∪ B ∪ C  =  A + B + C  −  AB − AC − BC  +  ABC
         if (@popCount(subset) % 2 == 1) total += term else total -= term;
